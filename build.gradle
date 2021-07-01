@@ -1,0 +1,51 @@
+buildscript {
+    ext {
+        setup = [
+                compileSdk : 30,
+                buildTools : "30.0.3",
+                minSdk     : 14,
+                targetSdk  : 30
+        ]
+
+        release = [
+                versionName: "13.0.7",   ///v13.0.7
+                versionCode: 130007
+        ]
+    }
+
+    repositories {
+        jcenter()
+        maven {
+            url 'https://maven.google.com/'
+            name 'Google'
+        }
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:4.2.1'
+
+        ///[jitpack#publish]https://jitpack.io/docs/ANDROID/
+        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
+
+    }
+}
+
+def isReleaseBuild() {
+    return version.contains("SNAPSHOT") == false
+}
+
+allprojects {
+    version = VERSION_NAME
+    group = GROUP
+
+    repositories {
+        jcenter()
+        maven {
+            url 'https://maven.google.com/'
+            name 'Google'
+        }
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

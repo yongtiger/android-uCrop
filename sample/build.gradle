@@ -14,19 +14,24 @@ android {
     }
 
     flavorDimensions "default"
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        ///[FIX#Jitpack#需要Java 11]在项目根目录添加文件jitpack.yml（jdk: - openjdk11）
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
+
     lintOptions {
         abortOnError false
     }
+
     productFlavors {
         activity {
             buildConfigField("int","RequestMode", "1")
@@ -38,8 +43,8 @@ android {
 }
 
 dependencies {
-    implementation "androidx.appcompat:appcompat:1.3.0"
+    implementation "androidx.appcompat:appcompat:1.3.1"
     implementation "androidx.core:core:1.6.0"
-    implementation "androidx.constraintlayout:constraintlayout:2.0.4"
+    implementation "androidx.constraintlayout:constraintlayout:2.1.0"
     implementation project(':ucrop')
 }

@@ -1,5 +1,6 @@
 package com.yalantis.ucrop.util;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -8,6 +9,7 @@ import android.graphics.Matrix;
 import android.graphics.Point;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
@@ -16,8 +18,12 @@ import com.yalantis.ucrop.callback.BitmapLoadCallback;
 import com.yalantis.ucrop.task.BitmapLoadTask;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,22 +57,6 @@ public class BitmapLoadUtils {
             Log.e(TAG, "transformBitmap: ", error);
         }
         return bitmap;
-    }
-
-    public static int calculateInSampleSize(@NonNull BitmapFactory.Options options, int reqWidth, int reqHeight) {
-        // Raw height and width of image
-        final int height = options.outHeight;
-        final int width = options.outWidth;
-        int inSampleSize = 1;
-
-        if (height > reqHeight || width > reqWidth) {
-            // Calculate the largest inSampleSize value that is a power of 2 and keeps both
-            // height and width lower or equal to the requested height and width.
-            while ((height / inSampleSize) > reqHeight || (width / inSampleSize) > reqWidth) {
-                inSampleSize *= 2;
-            }
-        }
-        return inSampleSize;
     }
 
     public static int getExifOrientation(@NonNull Context context, @NonNull Uri imageUri) {
@@ -173,4 +163,62 @@ public class BitmapLoadUtils {
         }
     }
 
+    ///[FIX#Bitmap#OutOfMemoryError]
+    ///https://developer.android.com/topic/performance/graphics/load-bitmap
+    public static int calculateInSampleSize(@NonNull BitmapFactory.Options options, int maxWidth, int maxHeight) {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        while (height / inSampleSize >= maxHeight || width / inSampleSize >= maxWidth) {
+            inSampleSize *= 2;
+        }
+
+        return inSampleSize;
+    }
+
+    ///https://stackoverflow.com/questions/4349075/bitmapfactory-decoderesource-returns-a-mutable-bitmap-in-android-2-2-and-an-immu/16314940#16314940
+    /**decodes a bitmap from a resource id. returns a mutable bitmap no matter what is the API level.<br/>
+     might use the internal storage in some cases, creating temporary file that will be deleted as soon as it isn't finished*/
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    public static Bitmap decodeMutableBitmapFromResourceId(final Context context, final int bitmapResId, boolean isRecycle) {
+        final BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
+            bitmapOptions.inMutable = true;
+        Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), bitmapResId, bitmapOptions);
+        if (!bitmap.isMutable())
+            bitmap = convertToMutable(context, bitmap, isRecycle);
+        return bitmap;
+    }
+
+    @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+    public static Bitmap convertToMutable(final Context context, final Bitmap imgIn, boolean isRecycle) {
+        final int width = imgIn.getWidth(), height = imgIn.getHeight();
+        final Bitmap.Config type = imgIn.getConfig();
+        File outputFile = null;
+        final File outputDir = context.getCacheDir();
+        try {
+            outputFile = File.createTempFile(Long.toString(System.currentTimeMillis()), null, outputDir);
+            outputFile.deleteOnExit();
+            final RandomAccessFile randomAccessFile = new RandomAccessFile(outputFile, "rw");
+            final FileChannel channel = randomAccessFile.getChannel();
+            final MappedByteBuffer map = channel.map(FileChannel.MapMode.READ_WRITE, 0, imgIn.getRowBytes() * height);
+            imgIn.copyPixelsToBuffer(map);
+            if (isRecycle)
+                imgIn.recycle();
+            final Bitmap result = Bitmap.createBitmap(width, height, type);
+            map.position(0);
+            result.copyPixelsFromBuffer(map);
+            channel.close();
+            randomAccessFile.close();
+            outputFile.delete();
+            return result;
+        } catch (final Exception e) {
+        } finally {
+            if (outputFile != null)
+                outputFile.delete();
+        }
+        return null;
+    }
 }

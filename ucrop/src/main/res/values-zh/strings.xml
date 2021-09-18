@@ -5,4 +5,8 @@
 
     <string name="ucrop_menu_crop">裁剪</string>
 
+    <string name="ucrop_rotate">旋转</string>
+    <string name="ucrop_scale">比例</string>
+    <string name="ucrop_crop">作物</string>
+
 </resources>

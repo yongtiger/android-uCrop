@@ -1,5 +1,12 @@
 <resources>
+
     <string name="ucrop_label_original">Origineel</string>
     <string name="ucrop_label_edit_photo">Foto bewerken</string>
+
     <string name="ucrop_menu_crop">Bijsnijden</string>
+
+    <string name="ucrop_rotate">Roteren</string>
+    <string name="ucrop_scale">Schaal</string>
+    <string name="ucrop_crop">Bijsnijden</string>
+
 </resources>

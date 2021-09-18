@@ -1,5 +1,12 @@
 <resources>
+
     <string name="ucrop_label_original">Originale</string>
     <string name="ucrop_label_edit_photo">Modifica foto</string>
+
     <string name="ucrop_menu_crop">Taglia</string>
+
+    <string name="ucrop_rotate">Ruota</string>
+    <string name="ucrop_scale">Scala</string>
+    <string name="ucrop_crop">Ritaglia</string>
+
 </resources>

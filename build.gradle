@@ -8,8 +8,8 @@ buildscript {
         ]
 
         release = [
-                versionName: "13.2.1",   ///v13.2.1#update gradle:7.0.4
-                versionCode: 130201
+                versionName: "13.2.2",   ///v13.2.2#update gradle:7.0.4
+                versionCode: 130202
         ]
     }
 

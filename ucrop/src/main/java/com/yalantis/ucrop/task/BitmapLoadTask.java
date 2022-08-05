@@ -22,13 +22,16 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okio.BufferedSource;
-import okio.Okio;
-import okio.Sink;
+///[去掉OkHttp]
+//import okhttp3.OkHttpClient;
+//import okhttp3.Request;
+//import okhttp3.Response;
+//import okio.BufferedSource;
+//import okio.Okio;
+//import okio.Sink;
 
 /**
  * Creates and returns a Bitmap for a given Uri(String url).
@@ -214,6 +217,47 @@ public class BitmapLoadTask extends AsyncTask<Void, Void, BitmapLoadTask.BitmapW
         }
     }
 
+    ///[去掉OkHttp]
+//    private void downloadFile(@NonNull Uri inputUri, @Nullable Uri outputUri) throws NullPointerException, IOException {
+//        Log.d(TAG, "downloadFile");
+//
+//        if (outputUri == null) {
+//            throw new NullPointerException("Output Uri is null - cannot download image");
+//        }
+//
+//        OkHttpClient client = new OkHttpClient();
+//
+//        BufferedSource source = null;
+//        Sink sink = null;
+//        Response response = null;
+//        try {
+//            Request request = new Request.Builder()
+//                    .url(inputUri.toString())
+//                    .build();
+//            response = client.newCall(request).execute();
+//            source = response.body().source();
+//
+//            OutputStream outputStream = mContext.getContentResolver().openOutputStream(outputUri);
+//            if (outputStream != null) {
+//                sink = Okio.sink(outputStream);
+//                source.readAll(sink);
+//            } else {
+//                throw new NullPointerException("OutputStream for given output Uri is null");
+//            }
+//        } finally {
+//            BitmapLoadUtils.close(source);
+//            BitmapLoadUtils.close(sink);
+//            if (response != null) {
+//                BitmapLoadUtils.close(response.body());
+//            }
+//            client.dispatcher().cancelAll();
+//
+//            // swap uris, because input image was downloaded to the output destination
+//            // (cropped image will override it later)
+//            mInputUri = Uri.fromFile(new File(mOutputFilePath));
+//        }
+//    }
+
     private void downloadFile(@NonNull Uri inputUri, @Nullable Uri outputUri) throws NullPointerException, IOException {
         Log.d(TAG, "downloadFile");
 
@@ -221,32 +265,61 @@ public class BitmapLoadTask extends AsyncTask<Void, Void, BitmapLoadTask.BitmapW
             throw new NullPointerException("Output Uri is null - cannot download image");
         }
 
-        OkHttpClient client = new OkHttpClient();
+        OutputStream outputStream = mContext.getContentResolver().openOutputStream(outputUri);
+        if (outputStream == null) {
+            throw new NullPointerException("OutputStream for given output Uri is null");
+        }
 
-        BufferedSource source = null;
-        Sink sink = null;
-        Response response = null;
+        URL url;
+        HttpURLConnection connection = null;
+        InputStream inputStream = null;
         try {
-            Request request = new Request.Builder()
-                    .url(inputUri.toString())
-                    .build();
-            response = client.newCall(request).execute();
-            source = response.body().source();
+            url = new URL(inputUri.toString());
+            connection = (HttpURLConnection) url.openConnection();
 
-            OutputStream outputStream = mContext.getContentResolver().openOutputStream(outputUri);
-            if (outputStream != null) {
-                sink = Okio.sink(outputStream);
-                source.readAll(sink);
+            // 设定请求的方法为"GET"
+            connection.setRequestMethod("GET");
+//            connection.setConnectTimeout(timeout);
+//            connection.setReadTimeout(timeout);
+
+            // User-Agent  IE9的标识
+            connection.setRequestProperty("Charset", "UTF-8");
+//            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0;");
+//            connection.setRequestProperty("Accept-Language", "zh-CN");
+//            connection.setRequestProperty("Connection", "Keep-Alive");
+
+            /*
+             * 当我们要获取我们请求的http地址访问的数据时就是使用connection.getInputStream().read()方式时我们就需要setDoInput(true)，
+             * 根据api文档我们可知doInput默认就是为true。我们可以不用手动设置了，如果不需要读取输入流的话那就setDoInput(false)。
+             * 当我们要采用非get请求给一个http网络地址传参 就是使用connection.getOutputStream().write() 方法时我们就需要setDoOutput(true), 默认是false
+             */
+            // 设置是否从httpUrlConnection读入，默认情况下是true;
+            connection.setDoInput(true);
+            // 设置是否向httpUrlConnection输出，如果是post请求，参数要放在http正文内，因此需要设为true, 默认是false;
+            //connection.setDoOutput(true);//Android  4.0 GET时候 用这句会变成POST  报错java.io.FileNotFoundException
+
+            connection.connect();
+
+            //获得结果码
+            if (connection.getResponseCode() == 200) {
+                ///获得网络连接connection的输入流对象
+                inputStream = connection.getInputStream();//会隐式调用connect()
+
+                int len;
+                byte[] buffer = new byte[1024];
+                while ((len = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, len);
+                }
             } else {
-                throw new NullPointerException("OutputStream for given output Uri is null");
+                throw new IOException(connection.getResponseCode() + ":" + connection.getResponseMessage());
             }
         } finally {
-            BitmapLoadUtils.close(source);
-            BitmapLoadUtils.close(sink);
-            if (response != null) {
-                BitmapLoadUtils.close(response.body());
+            if(connection != null){
+                connection.disconnect();
             }
-            client.dispatcher().cancelAll();
+
+            ///关闭流Closeable
+            BitmapLoadUtils.closeIO(inputStream, outputStream);
 
             // swap uris, because input image was downloaded to the output destination
             // (cropped image will override it later)

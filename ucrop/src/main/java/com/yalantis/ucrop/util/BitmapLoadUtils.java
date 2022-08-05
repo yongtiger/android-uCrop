@@ -163,6 +163,22 @@ public class BitmapLoadUtils {
         }
     }
 
+    public static void closeIO(Closeable... closeables) {
+        if (null == closeables || closeables.length <= 0) {
+            return;
+        }
+        for (Closeable cb : closeables) {
+            try {
+                if (null == cb) {
+                    continue;
+                }
+                cb.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     ///[FIX#Bitmap#OutOfMemoryError]
     ///https://developer.android.com/topic/performance/graphics/load-bitmap
     public static int calculateInSampleSize(@NonNull BitmapFactory.Options options, int maxWidth, int maxHeight) {

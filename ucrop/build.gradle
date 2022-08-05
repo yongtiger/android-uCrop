@@ -44,8 +44,8 @@ android {
 }
 
 dependencies {
-    implementation "androidx.appcompat:appcompat:1.4.1"
+    implementation "androidx.appcompat:appcompat:1.4.2"
     implementation "androidx.exifinterface:exifinterface:1.3.3"
     implementation "androidx.transition:transition:1.4.1"
-    implementation "com.squareup.okhttp3:okhttp:4.9.1"
+//    implementation "com.squareup.okhttp3:okhttp:4.9.1"    ///[去掉OkHttp]
 }

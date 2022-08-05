@@ -8,8 +8,8 @@ buildscript {
         ]
 
         release = [
-                versionName: "13.3.0",   ///v13.3.0#update gradle:7.1.2
-                versionCode: 130300
+                versionName: "13.4.0",   ///v13.4.0#[去掉OkHttp]
+                versionCode: 130400
         ]
     }
 
@@ -19,7 +19,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.1.2'
+        classpath 'com.android.tools.build:gradle:7.2.2'
 
         ///[FIX#jitpack#jcenter废弃#Please remove usages of `jcenter()` Maven repository from your build scripts and migrate your build to other Maven repositories.]
         ///https://www.shangmayuan.com/a/12c08d0e68c3421cb2d547ee.html
